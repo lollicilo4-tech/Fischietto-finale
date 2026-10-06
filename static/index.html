@@ -159,6 +159,30 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
 .hist small { display: block; color: var(--muted); font-size: 12px; }
 .ok { color: var(--good); font-weight: 700; text-align: center; }
 .ko { color: var(--bad); font-weight: 700; text-align: center; }
+.sub2 { margin: 22px 0 10px; }
+.played { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.played .final { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; }
+.played .final .nm { font-family: var(--font-display); font-weight: 700; font-size: 20px; text-transform: uppercase; line-height: 1.05; overflow-wrap: anywhere; }
+.played .final .nm.r { text-align: right; }
+.played .score { font-family: var(--font-display); font-weight: 800; font-size: 38px; line-height: 1; }
+.played .bar { height: 30px; }
+.played .bar i { font-size: 13px; }
+.verdict { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; font-weight: 600; }
+.verdict span { padding: 3px 9px; border-radius: 999px; background: var(--surface2); color: var(--muted); }
+.verdict .y { background: var(--good); color: var(--on-good); } .verdict .n { background: var(--bad); color: var(--on-bad); }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; text-align: right; padding: 0 4px 8px; }
+.table td { padding: 9px 4px; border-top: 1px solid var(--line); text-align: right; font-family: var(--font-num); }
+.table th:nth-child(2), .table td:nth-child(2) { text-align: left; }
+.table td:nth-child(2) { font-family: var(--font-body); font-weight: 600; overflow-wrap: anywhere; }
+.table td:first-child, .table th:first-child { text-align: left; width: 26px; color: var(--muted); }
+.table td:last-child { font-weight: 700; font-size: 15px; }
+.table tr.ucl td:first-child { box-shadow: inset 3px 0 0 var(--home); }
+.table tr.rel td:first-child { box-shadow: inset 3px 0 0 var(--away); }
+.table .hide-s { display: none; }
+@media (min-width: 440px) { .table .hide-s { display: table-cell; } }
+.legend { font-size: 12px; color: var(--muted); }
+.cal { display: grid; grid-template-columns: 76px minmax(0, 1fr) 40px 40px; gap: 8px; align-items: center; font-size: 13px; font-family: var(--font-num); }
 .note { margin-top: 24px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -183,6 +207,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     <div id="hero"></div>
     <p class="lead">Tocca una partita per aprire il dettaglio. La quota equa è 1 diviso la probabilità: non è una quota di bookmaker.</p>
     <div class="list" id="matches"><div class="msg">Carico il turno…</div></div>
+    <div id="played"></div>
   </section>
   <section id="p-sicure" role="tabpanel" aria-labelledby="t-sicure" hidden>
     <p class="lead">Per ogni partita il modello sceglie l'esito più probabile. Qui li metti insieme e vedi quanto scende la probabilità complessiva.</p>
@@ -197,7 +222,12 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
   <section id="p-storico" role="tabpanel" aria-labelledby="t-storico" hidden>
     <p class="lead" id="hist-lead">Ogni pronostico viene salvato prima della partita e confrontato con il risultato.</p>
     <div class="sum" id="sum"></div>
+    <div id="quality"></div>
     <div class="panel" style="margin-top:14px"><div class="hist" id="hist"></div></div>
+  </section>
+  <section id="p-classifica" role="tabpanel" aria-labelledby="t-classifica" hidden>
+    <div class="panel"><div id="table"><div class="msg">Carico la classifica…</div></div></div>
+    <p class="legend">Barra blu: prime quattro. Barra rossa: ultime tre.</p>
   </section>
   <p class="note">Sono stime statistiche, non certezze: una squadra data al 60% non vince 4 volte su 10, succede spesso. I numeri vengono da un modello statistico; le spiegazioni sono generate automaticamente a partire dalle notizie più recenti.</p>
   <p class="note" style="margin-top:12px">Servizio solo informativo, non è un invito a scommettere. Il gioco d'azzardo può causare dipendenza ed è vietato ai minori di 18 anni. Football data provided by the Football-Data.org API.</p>
@@ -208,6 +238,8 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 5v14M3 12h4M17 12h4"/></svg>Partite</button>
   <button role="tab" id="t-sicure" aria-selected="false" aria-controls="p-sicure">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>Più sicure</button>
+  <button role="tab" id="t-classifica" aria-selected="false" aria-controls="p-classifica">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Classifica</button>
   <button role="tab" id="t-storico" aria-selected="false" aria-controls="p-storico">
     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Storico</button>
 </nav>
@@ -277,6 +309,24 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       "</div></details>";
   }
 
+  // Partite già giocate: pronostico fatto prima, risultato vero, esito
+  function played(x) {
+    var p = x.prob, v = [];
+    v.push('<span class="' + (x.ok ? "y" : "n") + '">' + (x.ok ? "✓ Esito azzeccato" : "✕ Esito sbagliato") + " (" + esc(x.pick) + " al " + pc(x.pick_p) + ")</span>");
+    if (x.ou) v.push('<span class="' + (x.ou.ok ? "y" : "n") + '">' + (x.ou.ok ? "✓" : "✕") + " Over/Under 2,5</span>");
+    if (x.gg) v.push('<span class="' + (x.gg.ok ? "y" : "n") + '">' + (x.gg.ok ? "✓" : "✕") + " Gol/No Gol</span>");
+    var top = x.top ? '<span>Risultato previsto ' + x.top[0] + "-" + x.top[1] + "</span>" : "";
+    var dt = "";
+    if (x.kickoff) { var d = new Date(x.kickoff); dt = DAYS[d.getDay()] + " " + String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0"); }
+    return '<div class="played"><div class="mhead"><span>' + esc(dt) + '</span><span>Finita</span></div>' +
+      '<div class="final"><div class="nm">' + esc(x.home) + '</div><div class="score">' + x.hg + "-" + x.ag + '</div><div class="nm r">' + esc(x.away) + "</div></div>" +
+      '<div class="bar" role="img" aria-label="Pronostico: ' + pc(p.p1) + " " + pc(p.px) + " " + pc(p.p2) + '">' +
+      '<i class="h" style="flex:' + p.p1 + '"><small>1</small>' + pc(p.p1) + "</i>" +
+      '<i class="d" style="flex:' + p.px + '"><small>X</small>' + pc(p.px) + "</i>" +
+      '<i class="a" style="flex:' + p.p2 + '"><small>2</small>' + pc(p.p2) + "</i></div>" +
+      '<div class="verdict">' + v.join("") + top + "</div></div>";
+  }
+
   // Il pronostico più netto del turno: l'esito 1X2 con la probabilità più alta
   function hero(matches) {
     var m = matches.slice().sort(function (a, b) {
@@ -317,7 +367,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     $("seg").appendChild(b);
   });
 
-  var tabs = ["partite", "sicure", "storico"];
+  var tabs = ["partite", "sicure", "classifica", "storico"];
   tabs.forEach(function (t) {
     $("t-" + t).addEventListener("click", function () {
       tabs.forEach(function (u) { $("t-" + u).setAttribute("aria-selected", String(u === t)); $("p-" + u).hidden = u !== t; });
@@ -339,6 +389,10 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       if (d.matchday) $("sub").textContent = "Serie A · giornata " + d.matchday;
       hero(d.matches);
       $("matches").innerHTML = d.matches.map(card).join("");
+      if (d.played && d.played.length) {
+        var hits = d.played.filter(function (x) { return x.ok; }).length;
+        $("played").innerHTML = '<h2 class="sub2">Già giocate</h2><p class="lead">Ultime ' + d.played.length + " partite pronosticate: esito azzeccato " + hits + " volte su " + d.played.length + '.</p><div class="list">' + d.played.map(played).join("") + "</div>";
+      }
       PICKS = d.matches.map(best).sort(function (a, b) { return b.p - a.p; });
       renderCombo();
     })
@@ -350,10 +404,38 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     $("sum").innerHTML =
       '<div class="stat"><div class="k">Esito 1X2 azzeccato</div><div class="v">' + h.hit + " su " + h.n + '</div><div class="s">' + pc(h.hit / h.n) + "</div></div>" +
       '<div class="stat"><div class="k">Probabilità media dichiarata</div><div class="v">' + pc(h.avg_p) + '</div><div class="s">se coincide, il modello è calibrato</div></div>';
+    if (h.brier != null) {
+      var better = h.brier < h.brier_base, diff = Math.abs(1 - h.brier / h.brier_base);
+      var cal = (h.calibration || []).map(function (b) {
+        return '<div class="cal"><span>' + esc(b.label) + '</span><span class="decay" style="display:block"><span class="track" style="display:block"><span class="fill" style="width:' + Math.round(b.hit * 100) + '%"></span></span></span><span>' + pc(b.avg_p) + "</span><span>" + pc(b.hit) + "</span></div>";
+      }).join("");
+      var mk = h.markets || {}, mkt = "";
+      if (mk.ou && mk.ou.n) mkt += '<div class="stat"><div class="k">Over/Under 2,5</div><div class="v">' + mk.ou.hit + " su " + mk.ou.n + '</div><div class="s">' + pc(mk.ou.hit / mk.ou.n) + "</div></div>";
+      if (mk.gg && mk.gg.n) mkt += '<div class="stat"><div class="k">Gol / No Gol</div><div class="v">' + mk.gg.hit + " su " + mk.gg.n + '</div><div class="s">' + pc(mk.gg.hit / mk.gg.n) + "</div></div>";
+      $("quality").innerHTML = '<h2 class="sub2">Qualità del modello</h2>' +
+        '<div class="sum"><div class="stat"><div class="k">Errore del modello</div><div class="v num">' + d2(h.brier) + '</div><div class="s">più è basso, meglio è</div></div>' +
+        '<div class="stat"><div class="k">Metodo semplice</div><div class="v num">' + d2(h.brier_base) + '</div><div class="s">solo le medie del campionato</div></div>' + mkt + "</div>" +
+        '<div class="panel" style="margin-top:14px"><p class="expl">' + (better
+          ? "Il modello sbaglia il " + Math.round(diff * 100) + "% in meno del metodo semplice."
+          : "Per ora il modello non fa meglio del metodo semplice (" + Math.round(diff * 100) + "% di errore in più).") +
+        (h.n < 50 ? " Con " + h.n + " partite il dato è ancora ballerino: serve almeno una cinquantina di partite, meglio cento." : "") + "</p></div>" +
+        (cal ? '<div class="panel"><h2>Quando dico 60%, succede?</h2><div class="cal" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em"><span>Probabilità</span><span>Successi</span><span>Detto</span><span>Reale</span></div><div style="display:flex;flex-direction:column;gap:8px">' + cal + '</div><p class="lead" style="margin:0">Se "Detto" e "Reale" sono vicini, le percentuali sono affidabili.</p></div>' : "");
+    }
     $("hist").innerHTML = h.items.map(function (x) {
       return "<div><span>" + esc(x.match) + "<small>" + esc(x.pick) + " dato al " + pc(x.p) + " · finale " + esc(x.score) + '</small></span><span class="' + (x.ok ? "ok" : "ko") + '" aria-label="' + (x.ok ? "Azzeccato" : "Sbagliato") + '">' + (x.ok ? "✓" : "✕") + "</span></div>";
     }).join("");
   }).catch(function () {});
+
+  fetch("/api/classifica").then(function (r) { return r.json(); }).then(function (c) {
+    var t = c.table || [];
+    if (!t.length) { $("table").innerHTML = '<div class="msg">Classifica non disponibile.</div>'; return; }
+    var n = t.length;
+    $("table").innerHTML = '<table class="table"><thead><tr><th>#</th><th>Squadra</th><th>PG</th><th class="hide-s">V</th><th class="hide-s">N</th><th class="hide-s">P</th><th>DR</th><th>Pt</th></tr></thead><tbody>' +
+      t.map(function (r) {
+        var dr = r.gf - r.ga, cls = r.pos <= 4 ? "ucl" : (n >= 18 && r.pos > n - 3) ? "rel" : "";
+        return '<tr class="' + cls + '"><td>' + r.pos + "</td><td>" + esc(r.team) + "</td><td>" + r.pg + '</td><td class="hide-s">' + r.w + '</td><td class="hide-s">' + r.d + '</td><td class="hide-s">' + r.l + "</td><td>" + (dr > 0 ? "+" : "") + dr + "</td><td>" + r.pts + "</td></tr>";
+      }).join("") + "</tbody></table>";
+  }).catch(function () { $("table").innerHTML = '<div class="msg">Classifica non disponibile.</div>'; });
 })();
 </script>
 </body>
