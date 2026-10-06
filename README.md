@@ -35,7 +35,9 @@ due volte al giorno, scrive i dati nella cartella `docs/` e la pubblica. I visit
 partire chiamate a football-data.org o a Claude, quindi il costo di Claude è fisso (circa 20 analisi al giorno)
 e non dipende dal traffico. Il server può restare spento, il sito è sempre acceso e lo Storico non si perde.
 
-1. **GitHub**: crea un account su github.com e un repository nuovo (anche privato).
+1. **GitHub**: crea un account su github.com e un repository nuovo **pubblico**. GitHub Pages è gratuito solo
+   per i repository pubblici; con uno privato serve un piano a pagamento, oppure Cloudflare Pages (punto 5).
+   Le chiavi non finiscono nel repository, restano nei Secrets.
 2. **Carica il progetto con GitHub Desktop**, non trascinando i file nel browser: GitHub Desktop rispetta
    `.gitignore` e non carica il file `.env` con le chiavi. Verifica comunque che `.env.example` abbia le righe
    delle chiavi vuote.
@@ -47,6 +49,16 @@ e non dipende dal traffico. Il server può restare spento, il sito è sempre acc
    - GitHub Pages: Settings, Pages, Source "Deploy from a branch", branch `main`, cartella `/docs`.
    - Cloudflare Pages: collega il repository, build command vuoto, output directory `docs`.
 6. Nella console Anthropic imposta un **limite di spesa mensile**, come rete di sicurezza.
+
+## App su iPhone
+
+Il sito è una web app installabile (PWA), senza App Store e senza costi. Dopo la pubblicazione, su iPhone:
+apri l'indirizzo del sito in **Safari**, tocca il pulsante Condividi, poi "Aggiungi alla schermata Home".
+Compare l'icona del fischietto, si apre a schermo intero e, senza rete, mostra l'ultimo turno visto.
+Funziona solo con un indirizzo `https://`, come quello di GitHub Pages o Cloudflare Pages.
+
+Un'app nativa per l'App Store richiede l'iscrizione al programma sviluppatori Apple (a pagamento) e un Mac,
+e Apple tende a rifiutare le app che sono solo un sito impacchettato o che toccano il tema delle scommesse.
 
 ## Pubblicità
 
