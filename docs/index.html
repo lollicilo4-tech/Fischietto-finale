@@ -183,6 +183,11 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
 @media (min-width: 440px) { .table .hide-s { display: table-cell; } }
 .legend { font-size: 12px; color: var(--muted); }
 .cal { display: grid; grid-template-columns: 76px minmax(0, 1fr) 40px 40px; gap: 8px; align-items: center; font-size: 13px; font-family: var(--font-num); }
+.res { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.res .t { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--link); margin: 6px 0 2px; }
+.res .r { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.res .r small { color: var(--muted); font-family: var(--font-num); }
+.res .r b { font-family: var(--font-num); font-weight: 600; }
 .note { margin-top: 24px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -279,6 +284,22 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     return { m: m.home + " – " + m.away, code: o[0], label: o[1], p: o[2] };
   }
 
+  function lastRows(arr, label) {
+    if (!arr || !arr.length) return "";
+    return '<div class="t">' + esc(label) + "</div>" + arr.map(function (x) {
+      return '<div class="r"><span class="chip ' + x.res + '">' + x.res + "</span><span>" + (x.home ? "vs " : "@ ") + esc(x.opp) + '</span><b>' + esc(x.score) + "</b></div>";
+    }).join("");
+  }
+  function results(m) {
+    var h = (m.h2h || []).map(function (x) {
+      var d = x.date.slice(8, 10) + "/" + x.date.slice(5, 7) + "/" + x.date.slice(2, 4);
+      return '<div class="r"><small>' + d + "</small><span>" + esc(x.home) + " – " + esc(x.away) + '</span><b>' + esc(x.score) + "</b></div>";
+    }).join("");
+    var l = m.last || {};
+    var out = lastRows(l.home, "Ultime di " + m.home) + lastRows(l.away, "Ultime di " + m.away) + (h ? '<div class="t">Ultimi scontri diretti</div>' + h : "");
+    return out ? '<div class="res">' + out + "</div>" : "";
+  }
+
   function card(m, i) {
     var p = m.prob, f = m.fair_odds, a = m.analysis, s = m.top_scores[0];
     var alt = m.top_scores.slice(1).map(function (x) { return x[0] + "-" + x[1]; }).join(", ");
@@ -305,7 +326,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       '<div class="stat"><div class="k">Over 2,5</div><div class="v">' + pc(p.o25) + '</div><div class="s">quota equa ' + d2(f.o25) + " · Under " + pc(p.u25) + "</div></div>" +
       '<div class="stat"><div class="k">Segnano entrambe</div><div class="v">' + pc(p.gg) + '</div><div class="s">quota equa ' + d2(f.gg) + " · No " + pc(p.ng) + "</div></div>" +
       "</div>" +
-      '<div class="formrow"><div><b>' + esc(m.home) + "</b>" + chips(m.form.home) + "</div><div><b>" + esc(m.away) + "</b>" + chips(m.form.away) + "</div></div>" +
+      results(m) +
       "</div></details>";
   }
 
@@ -409,6 +430,18 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       var cal = (h.calibration || []).map(function (b) {
         return '<div class="cal"><span>' + esc(b.label) + '</span><span class="decay" style="display:block"><span class="track" style="display:block"><span class="fill" style="width:' + Math.round(b.hit * 100) + '%"></span></span></span><span>' + pc(b.avg_p) + "</span><span>" + pc(b.hit) + "</span></div>";
       }).join("");
+      var cl = "";
+      if (h.claude) {
+        var c = h.claude, gain = c.brier_stat - c.brier_final;
+        cl = '<div class="panel"><h2>Le notizie aiutano?</h2><p class="expl">Su ' + c.n + " partite: con le notizie l'errore è " + d2(c.brier_final) + ", con la sola statistica " + d2(c.brier_stat) + ". " +
+          (c.n < 30 ? "Troppo presto per dirlo." : Math.abs(gain) < 0.003 ? "Per ora non cambia quasi nulla." : gain > 0 ? "Le notizie migliorano le stime." : "Le notizie per ora peggiorano le stime.") +
+          " Esito azzeccato: " + c.hit_final + " su " + c.n + " con le notizie, " + c.hit_stat + " su " + c.n + " con la sola statistica.</p></div>";
+      }
+      if (h.versions) {
+        var v = h.versions, g2 = v.brier_old - v.brier_new;
+        cl += '<div class="panel"><h2>Modello nuovo o vecchio?</h2><p class="expl">Su ' + v.n + " partite, solo statistica: errore " + d2(v.brier_new) + " per il modello attuale, " + d2(v.brier_old) + " per la prima versione. " +
+          (v.n < 30 ? "Troppo presto per dirlo." : Math.abs(g2) < 0.003 ? "Per ora sono alla pari." : g2 > 0 ? "Il modello attuale va meglio." : "La prima versione va meglio.") + "</p></div>";
+      }
       var mk = h.markets || {}, mkt = "";
       if (mk.ou && mk.ou.n) mkt += '<div class="stat"><div class="k">Over/Under 2,5</div><div class="v">' + mk.ou.hit + " su " + mk.ou.n + '</div><div class="s">' + pc(mk.ou.hit / mk.ou.n) + "</div></div>";
       if (mk.gg && mk.gg.n) mkt += '<div class="stat"><div class="k">Gol / No Gol</div><div class="v">' + mk.gg.hit + " su " + mk.gg.n + '</div><div class="s">' + pc(mk.gg.hit / mk.gg.n) + "</div></div>";
@@ -419,7 +452,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
           ? "Il modello sbaglia il " + Math.round(diff * 100) + "% in meno del metodo semplice."
           : "Per ora il modello non fa meglio del metodo semplice (" + Math.round(diff * 100) + "% di errore in più).") +
         (h.n < 50 ? " Con " + h.n + " partite il dato è ancora ballerino: serve almeno una cinquantina di partite, meglio cento." : "") + "</p></div>" +
-        (cal ? '<div class="panel"><h2>Quando dico 60%, succede?</h2><div class="cal" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em"><span>Probabilità</span><span>Successi</span><span>Detto</span><span>Reale</span></div><div style="display:flex;flex-direction:column;gap:8px">' + cal + '</div><p class="lead" style="margin:0">Se "Detto" e "Reale" sono vicini, le percentuali sono affidabili.</p></div>' : "");
+        (cal ? '<div class="panel"><h2>Quando dico 60%, succede?</h2><div class="cal" style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em"><span>Probabilità</span><span>Successi</span><span>Detto</span><span>Reale</span></div><div style="display:flex;flex-direction:column;gap:8px">' + cal + '</div><p class="lead" style="margin:0">Se "Detto" e "Reale" sono vicini, le percentuali sono affidabili.</p></div>' : "") + cl;
     }
     $("hist").innerHTML = h.items.map(function (x) {
       return "<div><span>" + esc(x.match) + "<small>" + esc(x.pick) + " dato al " + pc(x.p) + " · finale " + esc(x.score) + '</small></span><span class="' + (x.ok ? "ok" : "ko") + '" aria-label="' + (x.ok ? "Azzeccato" : "Sbagliato") + '">' + (x.ok ? "✓" : "✕") + "</span></div>";
