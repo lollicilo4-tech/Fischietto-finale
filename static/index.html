@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prima del Fischio</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root {
+  --bg: #f1f4f1; --surface: #ffffff; --fg: #14201a; --muted: #5b6a61; --line: #d8dfda;
+  --accent: #17663f; --accent-soft: #dcefe4; --home: #17663f; --draw: #a3aea7; --away: #c25f10;
+  --good: #17663f; --bad: #b3361f; --on-bar: #ffffff;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1612; --surface: #16201a; --fg: #e7efe9; --muted: #96a69b; --line: #25322a;
+    --accent: #4fc18a; --accent-soft: #1d3327; --home: #3ea872; --draw: #6b796f; --away: #e8914a;
+    --good: #4fc18a; --bad: #f0866f; --on-bar: #0b120e; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1612; --surface: #16201a; --fg: #e7efe9; --muted: #96a69b; --line: #25322a;
+  --accent: #4fc18a; --accent-soft: #1d3327; --home: #3ea872; --draw: #6b796f; --away: #e8914a;
+  --good: #4fc18a; --bad: #f0866f; --on-bar: #0b120e; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { background: var(--bg); }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  max-width: 640px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px;
+  font-variant-numeric: tabular-nums;
+}
+h1, h2, h3, p { margin: 0; }
+.top { display: flex; flex-direction: column; gap: 6px; padding-bottom: 14px; }
+.top h1 { font-family: var(--font-display); font-weight: 700; font-size: 38px; line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; }
+.top .sub { color: var(--muted); }
+.tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.tag { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid var(--muted); color: var(--muted); border-radius: 4px; padding: 2px 8px; }
+.tag.warn { color: var(--away); border-color: var(--away); }
+.tag.ok { color: var(--good); border-color: var(--good); }
+.tabs { position: sticky; top: 0; z-index: 5; display: flex; gap: 4px; background: var(--bg); padding-block: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.tabs button { flex: 1; font: inherit; font-weight: 600; color: var(--muted); background: transparent; border: 0; border-bottom: 3px solid transparent; padding: 8px 4px; cursor: pointer; }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--accent); }
+button:focus-visible, summary:focus-visible, a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lead { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+.list { display: flex; flex-direction: column; gap: 10px; }
+.msg { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; color: var(--muted); }
+.msg.err { color: var(--bad); border-color: var(--bad); }
+
+details.match { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+details.match summary { list-style: none; cursor: pointer; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+details.match summary::-webkit-details-marker { display: none; }
+.mhead { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: var(--muted); }
+.conf { font-weight: 600; }
+.conf.alta { color: var(--good); } .conf.media { color: var(--away); } .conf.bassa { color: var(--bad); }
+.teams { font-family: var(--font-display); font-weight: 600; font-size: 24px; line-height: 1.1; display: flex; justify-content: space-between; gap: 8px; text-transform: uppercase; }
+.teams span { min-width: 0; overflow-wrap: anywhere; }
+.teams .away { text-align: right; }
+.bar { display: flex; height: 38px; gap: 2px; border-radius: 6px; overflow: hidden; }
+.bar i { font-style: normal; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--on-bar); font-size: 13px; font-weight: 600; line-height: 1.1; min-width: 0; }
+.bar i small { font-size: 10px; font-weight: 500; opacity: 0.85; letter-spacing: 0.04em; }
+.bar .h { background: var(--home); } .bar .d { background: var(--draw); } .bar .a { background: var(--away); }
+.detail { border-top: 1px solid var(--line); padding: 14px; display: flex; flex-direction: column; gap: 14px; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.stat { background: var(--bg); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+.stat .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat .v { font-family: var(--font-display); font-weight: 600; font-size: 26px; line-height: 1.15; }
+.stat .s { font-size: 12px; color: var(--muted); }
+.stat.wide { grid-column: 1 / -1; }
+.expl { font-size: 14px; }
+.who { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.abs { font-size: 13px; color: var(--muted); }
+.srcs { font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; }
+.srcs a { color: var(--accent); overflow-wrap: anywhere; }
+.formrow { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.formrow div { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.formrow b { font-weight: 600; min-width: 90px; }
+.chip { width: 22px; height: 22px; border-radius: 4px; display: inline-grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--on-bar); }
+.chip.V { background: var(--home); } .chip.N { background: var(--draw); } .chip.P { background: var(--bad); }
+
+.seg { display: flex; gap: 6px; margin-bottom: 14px; align-items: center; flex-wrap: wrap; }
+.seg span { font-size: 14px; color: var(--muted); margin-right: 4px; }
+.seg button { font: inherit; font-weight: 600; min-width: 44px; padding: 6px 12px; background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-bar); }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px; margin-bottom: 14px; }
+.pick { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.pick .m { font-size: 13px; color: var(--muted); }
+.pick .t { font-weight: 600; }
+.pick .p { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1; text-align: right; }
+.pick .p small { display: block; font-family: var(--font-body); font-weight: 400; font-size: 12px; color: var(--muted); }
+.combo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; background: var(--accent-soft); border-radius: 8px; padding: 12px; }
+.combo .big { font-family: var(--font-display); font-weight: 700; font-size: 40px; line-height: 1; color: var(--accent); }
+h2 { font-family: var(--font-display); font-weight: 600; font-size: 22px; text-transform: uppercase; letter-spacing: 0.02em; }
+.decay { display: flex; flex-direction: column; gap: 8px; }
+.decay div { display: grid; grid-template-columns: 96px minmax(0, 1fr) 44px; gap: 8px; align-items: center; font-size: 13px; }
+.decay .track { background: var(--bg); border-radius: 4px; height: 14px; overflow: hidden; }
+.decay .fill { display: block; height: 100%; background: var(--draw); border-radius: 4px; }
+.decay .on .fill { background: var(--accent); }
+.decay .on { font-weight: 600; }
+.decay .val { text-align: right; }
+.sum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.hist div { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 10px; align-items: center; padding-block: 9px; border-bottom: 1px solid var(--line); font-size: 14px; }
+.hist div:last-child { border-bottom: 0; }
+.hist small { display: block; color: var(--muted); font-size: 12px; }
+.ok { color: var(--good); font-weight: 700; text-align: center; }
+.ko { color: var(--bad); font-weight: 700; text-align: center; }
+.note { margin-top: 24px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Prima del Fischio</h1>
+  <p class="sub" id="sub">Serie A · come potrebbe andare ogni partita</p>
+  <div class="tags" id="tags"></div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sezioni">
+  <button role="tab" id="t-partite" aria-selected="true" aria-controls="p-partite">Partite</button>
+  <button role="tab" id="t-sicure" aria-selected="false" aria-controls="p-sicure">Più sicure</button>
+  <button role="tab" id="t-storico" aria-selected="false" aria-controls="p-storico">Storico</button>
+</nav>
+
+<main>
+  <section id="p-partite" role="tabpanel" aria-labelledby="t-partite">
+    <p class="lead">Tocca una partita per vedere il dettaglio. La quota equa è 1 diviso la probabilità: non è una quota di bookmaker.</p>
+    <div class="list" id="matches"><div class="msg">Carico il turno…</div></div>
+  </section>
+  <section id="p-sicure" role="tabpanel" aria-labelledby="t-sicure" hidden>
+    <p class="lead">Per ogni partita il modello sceglie l'esito più probabile. Qui li metti insieme e vedi quanto scende la probabilità complessiva.</p>
+    <div class="seg" id="seg" role="group" aria-label="Numero di selezioni"><span>Selezioni</span></div>
+    <div class="panel" id="combo"></div>
+    <div class="panel">
+      <h2>Come scende la probabilità</h2>
+      <div class="decay" id="decay"></div>
+      <p class="lead" style="margin:0">Le partite sono trattate come indipendenti. Più selezioni aggiungi, più è facile che una sbagli.</p>
+    </div>
+  </section>
+  <section id="p-storico" role="tabpanel" aria-labelledby="t-storico" hidden>
+    <p class="lead" id="hist-lead">Ogni pronostico viene salvato prima della partita e confrontato con il risultato.</p>
+    <div class="sum" id="sum"></div>
+    <div class="panel" style="margin-top:14px"><div class="hist" id="hist"></div></div>
+  </section>
+</main>
+
+<p class="note">Sono stime statistiche, non certezze: una squadra data al 60% non vince 4 volte su 10, succede spesso. I numeri vengono da un modello statistico. Claude legge le notizie e spiega, con una correzione limitata e visibile.</p>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var pc = function (p) { return Math.round(p * 100) + "%"; };
+  var d1 = function (x) { return x.toFixed(1).replace(".", ","); };
+  var d2 = function (x) { return x == null ? "–" : x.toFixed(2).replace(".", ","); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+  var DAYS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+  function when(m) {
+    if (m.label) return m.label;
+    if (!m.kickoff) return "";
+    var d = new Date(m.kickoff);
+    return DAYS[d.getDay()] + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  function chips(f) { return f ? f.split("").map(function (c) { return '<span class="chip ' + c + '">' + c + "</span>"; }).join("") : '<span class="abs">nessun dato</span>'; }
+
+  var PICKS = [], n = 3;
+
+  function best(m) {
+    var p = m.prob, f = m.fair_odds;
+    var o = [
+      ["1", "Vince " + m.home, p.p1], ["2", "Vince " + m.away, p.p2],
+      ["1X", m.home + " non perde", p.p1 + p.px], ["X2", m.away + " non perde", p.p2 + p.px],
+      ["Over 1,5", "Almeno 2 gol", p.o15], ["Under 3,5", "Al massimo 3 gol", p.u35],
+      ["Over 2,5", "Almeno 3 gol", p.o25], ["Under 2,5", "Al massimo 2 gol", p.u25],
+      ["Gol", "Segnano entrambe", p.gg], ["No Gol", "Non segnano entrambe", p.ng]
+    ].sort(function (a, b) { return b[2] - a[2]; })[0];
+    return { m: m.home + " – " + m.away, code: o[0], label: o[1], p: o[2] };
+  }
+
+  function card(m) {
+    var p = m.prob, f = m.fair_odds, a = m.analysis, s = m.top_scores[0];
+    var alt = m.top_scores.slice(1).map(function (x) { return x[0] + "-" + x[1]; }).join(", ");
+    var abs = "";
+    if (a.absences_home.length) abs += "<div><b>" + esc(m.home) + ":</b> " + a.absences_home.map(esc).join(", ") + "</div>";
+    if (a.absences_away.length) abs += "<div><b>" + esc(m.away) + ":</b> " + a.absences_away.map(esc).join(", ") + "</div>";
+    var src = a.sources.length ? '<div class="srcs">' + a.sources.map(function (x) { return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.title) + "</a>"; }).join("") + "</div>" : "";
+    var adj = (Math.abs(a.factor_home - 1) > 0.005 || Math.abs(a.factor_away - 1) > 0.005)
+      ? '<div class="abs">Correzione sui gol attesi: ' + esc(m.home) + " ×" + d2(a.factor_home) + ", " + esc(m.away) + " ×" + d2(a.factor_away) + " (gol attesi di base " + d1(m.xg_base[0]) + " - " + d1(m.xg_base[1]) + ").</div>" : "";
+    return '<details class="match"><summary>' +
+      '<div class="mhead"><span>' + esc(when(m)) + '</span><span class="conf ' + m.conf + '">Affidabilità ' + m.conf + "</span></div>" +
+      '<div class="teams"><span>' + esc(m.home) + '</span><span class="away">' + esc(m.away) + "</span></div>" +
+      '<div class="bar" role="img" aria-label="' + esc(m.home) + " " + pc(p.p1) + ", pareggio " + pc(p.px) + ", " + esc(m.away) + " " + pc(p.p2) + '">' +
+      '<i class="h" style="flex:' + p.p1 + '"><small>1</small>' + pc(p.p1) + "</i>" +
+      '<i class="d" style="flex:' + p.px + '"><small>X</small>' + pc(p.px) + "</i>" +
+      '<i class="a" style="flex:' + p.p2 + '"><small>2</small>' + pc(p.p2) + "</i></div></summary>" +
+      '<div class="detail">' +
+      "<div><div class=\"who\">" + (a.ai ? "Analisi di Claude con ricerca web" : "Analisi del modello") + '</div><p class="expl">' + esc(a.text) + "</p></div>" +
+      abs + adj + src +
+      '<div class="grid">' +
+      '<div class="stat wide"><div class="k">Quote eque 1 · X · 2</div><div class="v">' + d2(f.p1) + " · " + d2(f.px) + " · " + d2(f.p2) + "</div></div>" +
+      '<div class="stat"><div class="k">Risultato probabile</div><div class="v">' + s[0] + "-" + s[1] + '</div><div class="s">' + pc(s[2]) + " · poi " + alt + "</div></div>" +
+      '<div class="stat"><div class="k">Gol attesi</div><div class="v">' + d1(m.xg[0]) + " - " + d1(m.xg[1]) + '</div><div class="s">totale ' + d1(m.xg[0] + m.xg[1]) + "</div></div>" +
+      '<div class="stat"><div class="k">Over 2,5</div><div class="v">' + pc(p.o25) + '</div><div class="s">quota equa ' + d2(f.o25) + " · Under " + pc(p.u25) + "</div></div>" +
+      '<div class="stat"><div class="k">Segnano entrambe</div><div class="v">' + pc(p.gg) + '</div><div class="s">quota equa ' + d2(f.gg) + " · No " + pc(p.ng) + "</div></div>" +
+      "</div>" +
+      '<div class="formrow"><div><b>' + esc(m.home) + "</b>" + chips(m.form.home) + "</div><div><b>" + esc(m.away) + "</b>" + chips(m.form.away) + "</div></div>" +
+      "</div></details>";
+  }
+
+  function renderCombo() {
+    var sel = PICKS.slice(0, n), prod = sel.reduce(function (s, x) { return s * x.p; }, 1);
+    $("combo").innerHTML = sel.map(function (x) {
+      return '<div class="pick"><div><div class="m">' + esc(x.m) + '</div><div class="t">' + esc(x.label) + ' <span style="color:var(--muted);font-weight:400">(' + esc(x.code) + ')</span></div></div><div class="p">' + pc(x.p) + "<small>quota equa " + d2(1 / x.p) + "</small></div></div>";
+    }).join("") + '<div class="combo"><div class="big">' + pc(prod) + '</div><div>probabilità che tutte le ' + n + " selezioni riescano, circa 1 volta su " + Math.round(1 / prod) + ".</div></div>";
+    var cum = 1;
+    $("decay").innerHTML = PICKS.slice(0, 5).map(function (x, i) {
+      cum *= x.p;
+      return '<div class="' + (i + 1 === n ? "on" : "") + '"><span>' + (i + 1) + (i ? " selezioni" : " selezione") + '</span><span class="track"><span class="fill" style="width:' + Math.round(cum * 100) + '%"></span></span><span class="val">' + pc(cum) + "</span></div>";
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll("#seg button"), function (b) { b.setAttribute("aria-pressed", String(+b.dataset.n === n)); });
+  }
+  [2, 3, 4, 5].forEach(function (k) {
+    var b = document.createElement("button");
+    b.type = "button"; b.dataset.n = k; b.textContent = k;
+    b.addEventListener("click", function () { n = k; renderCombo(); });
+    $("seg").appendChild(b);
+  });
+
+  var tabs = ["partite", "sicure", "storico"];
+  tabs.forEach(function (t) {
+    $("t-" + t).addEventListener("click", function () {
+      tabs.forEach(function (u) { $("t-" + u).setAttribute("aria-selected", String(u === t)); $("p-" + u).hidden = u !== t; });
+    });
+  });
+
+  fetch("/api/turno").then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Errore"); return j; }); })
+    .then(function (d) {
+      var tags = [];
+      tags.push(d.demo ? '<span class="tag warn">Dati di esempio</span>' : '<span class="tag ok">Dati reali</span>');
+      tags.push(d.ai ? '<span class="tag ok">Analisi Claude attiva</span>' : '<span class="tag">Analisi a regole</span>');
+      $("tags").innerHTML = tags.join("");
+      if (d.matchday) $("sub").textContent = "Serie A · giornata " + d.matchday;
+      $("matches").innerHTML = d.matches.map(card).join("");
+      PICKS = d.matches.map(best).sort(function (a, b) { return b.p - a.p; });
+      renderCombo();
+    })
+    .catch(function (e) { $("matches").innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
+
+  fetch("/api/storico").then(function (r) { return r.json(); }).then(function (h) {
+    if (h.demo) $("hist-lead").textContent = "Esempio dimostrativo. Con i dati reali qui compaiono i pronostici salvati prima di ogni partita e confrontati con il risultato.";
+    if (!h.n) { $("sum").innerHTML = '<div class="stat wide"><div class="k">Ancora vuoto</div><div class="s">Appena si giocano le partite pronosticate, compare il confronto.</div></div>'; return; }
+    $("sum").innerHTML =
+      '<div class="stat"><div class="k">Esito 1X2 azzeccato</div><div class="v">' + h.hit + " su " + h.n + '</div><div class="s">' + pc(h.hit / h.n) + "</div></div>" +
+      '<div class="stat"><div class="k">Probabilità media dichiarata</div><div class="v">' + pc(h.avg_p) + '</div><div class="s">se coincide, il modello è calibrato</div></div>';
+    $("hist").innerHTML = h.items.map(function (x) {
+      return "<div><span>" + esc(x.match) + "<small>" + esc(x.pick) + " dato al " + pc(x.p) + " · finale " + esc(x.score) + '</small></span><span class="' + (x.ok ? "ok" : "ko") + '" aria-label="' + (x.ok ? "Azzeccato" : "Sbagliato") + '">' + (x.ok ? "✓" : "✕") + "</span></div>";
+    }).join("");
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>
