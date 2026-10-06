@@ -44,26 +44,83 @@ def _write(d: dict) -> None:
     tmp.replace(FILE)
 
 
-def save(match_id: str, home: str, away: str, kickoff: str, p1: float, px: float, p2: float) -> None:
+def save(match_id: str, home: str, away: str, kickoff: str, p1: float, px: float, p2: float,
+         extra: dict | None = None) -> None:
     d = _load()
     if match_id in d:  # il primo pronostico resta quello valido
         return
     pick, pick_p = max((("1", p1), ("X", px), ("2", p2)), key=lambda x: x[1])
     d[match_id] = dict(home=home, away=away, kickoff=kickoff, p1=p1, px=px, p2=p2, pick=pick, pick_p=pick_p)
+    if extra:  # altri mercati e gol attesi, per la scheda e per le metriche (assenti nei pronostici più vecchi)
+        d[match_id].update(extra)
     _write(d)
 
 
-def history(finished: list[dict]) -> dict:
+def _outcome(m: dict) -> str:
+    return "1" if m["hg"] > m["ag"] else "X" if m["hg"] == m["ag"] else "2"
+
+
+def _joined(finished: list[dict]) -> list[tuple[str, dict, dict]]:
     results = {m["id"]: m for m in finished}
-    items = []
-    for mid, p in sorted(_load().items(), key=lambda kv: kv[1].get("kickoff") or "", reverse=True):
-        m = results.get(mid)
-        if not m:
-            continue
-        actual = "1" if m["hg"] > m["ag"] else "X" if m["hg"] == m["ag"] else "2"
+    rows = [(mid, p, results[mid]) for mid, p in _load().items() if mid in results]
+    rows.sort(key=lambda r: r[1].get("kickoff") or "", reverse=True)
+    return rows
+
+
+def recent(finished: list[dict], limit: int = 9) -> list[dict]:
+    """Ultime partite giocate che avevano un pronostico salvato, con il risultato vero."""
+    out = []
+    for mid, p, m in _joined(finished)[:limit]:
+        actual = _outcome(m)
+        item = {"id": mid, "home": p["home"], "away": p["away"], "kickoff": p.get("kickoff"),
+                "prob": {"p1": p["p1"], "px": p["px"], "p2": p["p2"]},
+                "pick": p["pick"], "pick_p": p["pick_p"], "hg": m["hg"], "ag": m["ag"],
+                "actual": actual, "ok": p["pick"] == actual}
+        if p.get("o25") is not None:
+            item["ou"] = {"p": p["o25"], "ok": (m["hg"] + m["ag"] >= 3) == (p["o25"] >= 0.5)}
+        if p.get("gg") is not None:
+            item["gg"] = {"p": p["gg"], "ok": (m["hg"] > 0 and m["ag"] > 0) == (p["gg"] >= 0.5)}
+        if p.get("top"):
+            item["top"] = p["top"]
+        out.append(item)
+    return out
+
+
+def history(finished: list[dict]) -> dict:
+    rows = _joined(finished)
+    items, brier, outcomes = [], [], []
+    for mid, p, m in rows:
+        actual = _outcome(m)
+        outcomes.append(actual)
+        brier.append(sum((q - (1.0 if k == actual else 0.0)) ** 2
+                         for k, q in (("1", p["p1"]), ("X", p["px"]), ("2", p["p2"]))))
         items.append({"match": f"{p['home']} – {p['away']}", "pick": p["pick"], "p": p["pick_p"],
                       "score": f"{m['hg']}-{m['ag']}", "ok": p["pick"] == actual})
     n = len(items)
-    hit = sum(1 for i in items if i["ok"])
-    return {"n": n, "hit": hit, "avg_p": (sum(i["p"] for i in items) / n) if n else None,
-            "items": items[:30]}
+    out = {"n": n, "hit": sum(1 for i in items if i["ok"]),
+           "avg_p": (sum(i["p"] for i in items) / n) if n else None, "items": items[:30]}
+    if not n:
+        return out
+
+    # Metodo di riferimento: usare sempre le frequenze di 1, X, 2 dell'intero campionato
+    tot = len(finished)
+    base = {k: sum(1 for m in finished if _outcome(m) == k) / tot for k in ("1", "X", "2")}
+    brier_base = sum(sum((base[k] - (1.0 if k == a else 0.0)) ** 2 for k in base) for a in outcomes) / n
+    out["brier"] = sum(brier) / n
+    out["brier_base"] = brier_base
+    out["base_rates"] = {k: round(v, 3) for k, v in base.items()}
+
+    # Calibrazione: quando dichiaro una certa probabilità, quanto spesso ci prendo davvero?
+    buckets = []
+    for lo, hi, label in ((0, 0.45, "sotto 45%"), (0.45, 0.55, "45-55%"), (0.55, 0.65, "55-65%"), (0.65, 1.01, "65% o più")):
+        sel = [i for i in items if lo <= i["p"] < hi]
+        if sel:
+            buckets.append({"label": label, "n": len(sel), "avg_p": sum(i["p"] for i in sel) / len(sel),
+                            "hit": sum(1 for i in sel if i["ok"]) / len(sel)})
+    out["calibration"] = buckets
+
+    # Altri mercati, solo per i pronostici che li avevano salvati
+    ou = [(p["o25"] >= 0.5) == (m["hg"] + m["ag"] >= 3) for _, p, m in rows if p.get("o25") is not None]
+    gg = [(p["gg"] >= 0.5) == (m["hg"] > 0 and m["ag"] > 0) for _, p, m in rows if p.get("gg") is not None]
+    out["markets"] = {"ou": {"n": len(ou), "hit": sum(ou)}, "gg": {"n": len(gg), "hit": sum(gg)}}
+    return out

@@ -74,12 +74,25 @@ def _name(t: dict) -> str:
     return t.get("shortName") or t["name"]
 
 
+def _standings(st: dict) -> list[dict]:
+    tables = [t for t in st.get("standings", []) if t.get("type") == "TOTAL"] or st.get("standings", [])
+    if not tables:
+        return []
+    return [{"pos": r["position"], "team": _name(r["team"]), "pg": r["playedGames"], "w": r["won"],
+             "d": r["draw"], "l": r["lost"], "gf": r["goalsFor"], "ga": r["goalsAgainst"], "pts": r["points"]}
+            for r in tables[0]["table"]]
+
+
 async def real_context() -> dict:
     from . import model
 
     async with httpx.AsyncClient() as client:
         fin = await _get(client, f"/competitions/{COMPETITION}/matches", {"status": "FINISHED"})
         sch = await _get(client, f"/competitions/{COMPETITION}/matches", {"status": "SCHEDULED,TIMED"})
+        try:  # la classifica è un di più: se manca, il resto funziona lo stesso
+            st = await _get(client, f"/competitions/{COMPETITION}/standings", {})
+        except httpx.HTTPError:
+            st = {}
 
     finished = [
         {"id": str(m["id"]), "date": m["utcDate"], "home": _name(m["homeTeam"]), "away": _name(m["awayTeam"]),
@@ -100,7 +113,8 @@ async def real_context() -> dict:
         for m in upcoming if m["matchday"] == matchday
     ]
     return {"demo": False, "teams": teams, "avg_h": avg_h, "avg_a": avg_a,
-            "fixtures": fixtures, "finished": finished, "matchday": matchday}
+            "fixtures": fixtures, "finished": finished, "matchday": matchday,
+            "standings": _standings(st)}
 
 
 async def get_context() -> dict:

@@ -53,11 +53,14 @@ async def build_turno() -> dict:
                                             "absences_home", "absences_away", "sources")},
         })
         if not ctx["demo"]:
-            store.save(fx["id"], fx["home"], fx["away"], fx["kickoff"], prob["p1"], prob["px"], prob["p2"])
+            store.save(fx["id"], fx["home"], fx["away"], fx["kickoff"], prob["p1"], prob["px"], prob["p2"],
+                       extra={"o25": prob["o25"], "gg": prob["gg"], "xg": [round(lh, 2), round(la, 2)],
+                              "top": s["top_scores"][0][:2]})
 
     return {"demo": ctx["demo"], "ai": any(a["ai"] for a in analyses),
             "ai_error": next((a.get("reason") for a in analyses if a.get("reason")), None),
             "matchday": ctx.get("matchday"),
+            "played": [] if ctx["demo"] else store.recent(ctx["finished"]),
             "generated_at": datetime.now(timezone.utc).isoformat(timespec="minutes"),
             "matches": out}
 
@@ -67,3 +70,19 @@ async def build_storico() -> dict:
         return DEMO_HISTORY
     ctx = await data.get_context()
     return {"demo": False, **store.history(ctx["finished"])}
+
+
+DEMO_CLASSIFICA = [
+    {"pos": i + 1, "team": t, "pg": 6, "w": w, "d": d, "l": 6 - w - d, "gf": gf, "ga": ga, "pts": 3 * w + d}
+    for i, (t, w, d, gf, ga) in enumerate([
+        ("Inter", 5, 1, 14, 4), ("Napoli", 4, 1, 10, 5), ("Milan", 4, 0, 9, 6), ("Juventus", 3, 2, 9, 5),
+        ("Atalanta", 3, 2, 11, 7), ("Roma", 3, 1, 8, 6), ("Lazio", 2, 3, 7, 6), ("Bologna", 2, 2, 7, 7),
+    ])
+]
+
+
+async def build_classifica() -> dict:
+    if not data.has_key():
+        return {"demo": True, "table": DEMO_CLASSIFICA}
+    ctx = await data.get_context()
+    return {"demo": False, "table": ctx.get("standings", [])}
