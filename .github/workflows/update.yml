@@ -2,8 +2,8 @@ name: Aggiorna pronostici
 
 on:
   schedule:
-    - cron: "0 6,18 * * *"
-  workflow_dispatch:
+    - cron: "0 6,18 * * *"   # 08:00 e 20:00 in Italia con l'ora legale (07:00 e 19:00 con quella solare)
+  workflow_dispatch:          # pulsante "Run workflow" nella scheda Actions
 
 permissions:
   contents: write
