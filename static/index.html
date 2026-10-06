@@ -183,6 +183,11 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
 @media (min-width: 440px) { .table .hide-s { display: table-cell; } }
 .legend { font-size: 12px; color: var(--muted); }
 .cal { display: grid; grid-template-columns: 76px minmax(0, 1fr) 40px 40px; gap: 8px; align-items: center; font-size: 13px; font-family: var(--font-num); }
+.res { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.res .t { font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--link); margin: 6px 0 2px; }
+.res .r { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+.res .r small { color: var(--muted); font-family: var(--font-num); }
+.res .r b { font-family: var(--font-num); font-weight: 600; }
 .note { margin-top: 24px; font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 14px; }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -279,6 +284,22 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     return { m: m.home + " – " + m.away, code: o[0], label: o[1], p: o[2] };
   }
 
+  function lastRows(arr, label) {
+    if (!arr || !arr.length) return "";
+    return '<div class="t">' + esc(label) + "</div>" + arr.map(function (x) {
+      return '<div class="r"><span class="chip ' + x.res + '">' + x.res + "</span><span>" + (x.home ? "vs " : "@ ") + esc(x.opp) + '</span><b>' + esc(x.score) + "</b></div>";
+    }).join("");
+  }
+  function results(m) {
+    var h = (m.h2h || []).map(function (x) {
+      var d = x.date.slice(8, 10) + "/" + x.date.slice(5, 7) + "/" + x.date.slice(2, 4);
+      return '<div class="r"><small>' + d + "</small><span>" + esc(x.home) + " – " + esc(x.away) + '</span><b>' + esc(x.score) + "</b></div>";
+    }).join("");
+    var l = m.last || {};
+    var out = lastRows(l.home, "Ultime di " + m.home) + lastRows(l.away, "Ultime di " + m.away) + (h ? '<div class="t">Ultimi scontri diretti</div>' + h : "");
+    return out ? '<div class="res">' + out + "</div>" : "";
+  }
+
   function card(m, i) {
     var p = m.prob, f = m.fair_odds, a = m.analysis, s = m.top_scores[0];
     var alt = m.top_scores.slice(1).map(function (x) { return x[0] + "-" + x[1]; }).join(", ");
@@ -305,7 +326,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       '<div class="stat"><div class="k">Over 2,5</div><div class="v">' + pc(p.o25) + '</div><div class="s">quota equa ' + d2(f.o25) + " · Under " + pc(p.u25) + "</div></div>" +
       '<div class="stat"><div class="k">Segnano entrambe</div><div class="v">' + pc(p.gg) + '</div><div class="s">quota equa ' + d2(f.gg) + " · No " + pc(p.ng) + "</div></div>" +
       "</div>" +
-      '<div class="formrow"><div><b>' + esc(m.home) + "</b>" + chips(m.form.home) + "</div><div><b>" + esc(m.away) + "</b>" + chips(m.form.away) + "</div></div>" +
+      results(m) +
       "</div></details>";
   }
 
