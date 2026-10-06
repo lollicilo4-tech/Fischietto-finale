@@ -1,4 +1,4 @@
-"""Genera il sito statico nella cartella docs/ (turno.json, storico.json, index.html).
+"""Genera il sito statico nella cartella docs/ (turno.json, storico.json, classifica.json, index.html).
 
 Lo lancia GitHub Actions due volte al giorno; si può provare anche in locale:
     py generate.py
@@ -8,6 +8,7 @@ Se qualcosa va storto non tocca i file già pubblicati.
 import asyncio
 import json
 import os
+import shutil
 import sys
 from pathlib import Path
 
@@ -38,14 +39,19 @@ async def main() -> int:
 
     turno.pop("ai_error", None)  # i dettagli tecnici dell'errore non vanno nel file pubblico
     storico = await pipeline.build_storico()
+    classifica = await pipeline.build_classifica()
 
     OUT.mkdir(exist_ok=True)
     (OUT / ".nojekyll").touch()  # GitHub Pages: servi i file così come sono
-    for name, payload in (("turno.json", turno), ("storico.json", storico)):
+    for name, payload in (("turno.json", turno), ("storico.json", storico), ("classifica.json", classifica)):
         (OUT / name).write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     html = (ROOT / "static" / "index.html").read_text(encoding="utf-8")
     html = html.replace("/api/turno", "turno.json").replace("/api/storico", "storico.json")
+    html = html.replace("/api/classifica", "classifica.json")
     (OUT / "index.html").write_text(html, encoding="utf-8")
+    for f in (ROOT / "static").iterdir():  # icone, manifest e service worker per l'installazione su telefono
+        if f.is_file() and f.name != "index.html":
+            shutil.copy2(f, OUT / f.name)
 
     print(f"Sito aggiornato in {OUT}: {len(turno['matches'])} partite, "
           f"analisi {'Claude' if turno['ai'] else 'a regole'}.")
