@@ -127,6 +127,7 @@ async def real_context() -> dict:
     simple = model.build_teams_simple(finished)
     return {"demo": False, "teams_simple": simple, "teams": teams, "avg_h": avg_h, "avg_a": avg_a,
             "fixtures": fixtures, "finished": finished, "matchday": matchday,
+            "previous": previous,
             "standings": _standings(st)}
 
 

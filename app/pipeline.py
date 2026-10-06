@@ -21,6 +21,23 @@ DEMO_HISTORY = {
 }
 
 
+def _last(finished: list[dict], team: str, n: int = 5) -> list[dict]:
+    """Ultime n partite di una squadra, dalla più recente."""
+    out = []
+    for m in sorted((m for m in finished if team in (m["home"], m["away"])), key=lambda m: m["date"], reverse=True)[:n]:
+        home = m["home"] == team
+        gf, ga = (m["hg"], m["ag"]) if home else (m["ag"], m["hg"])
+        out.append({"date": m["date"][:10], "opp": m["away"] if home else m["home"], "home": home,
+                    "score": f"{m['hg']}-{m['ag']}", "res": "V" if gf > ga else "N" if gf == ga else "P"})
+    return out
+
+
+def _h2h(pool: list[dict], home: str, away: str, n: int = 3) -> list[dict]:
+    games = [m for m in pool if {m["home"], m["away"]} == {home, away}]
+    return [{"date": m["date"][:10], "home": m["home"], "away": m["away"], "score": f"{m['hg']}-{m['ag']}"}
+            for m in sorted(games, key=lambda m: m["date"], reverse=True)[:n]]
+
+
 async def build_turno() -> dict:
     ctx = await data.get_context()
     teams, avg_h, avg_a = ctx["teams"], ctx["avg_h"], ctx["avg_a"]
@@ -53,6 +70,8 @@ async def build_turno() -> dict:
             "xg": [round(lh, 2), round(la, 2)], "xg_base": [round(item["base"]["lh"], 2), round(item["base"]["la"], 2)],
             "top_scores": s["top_scores"], "conf": s["conf"],
             "form": {"home": teams.get(fx["home"], {}).get("form", ""), "away": teams.get(fx["away"], {}).get("form", "")},
+            "last": {"home": _last(ctx["finished"], fx["home"]), "away": _last(ctx["finished"], fx["away"])},
+            "h2h": _h2h(ctx.get("previous", []) + ctx["finished"], fx["home"], fx["away"]),
             "analysis": {k: an[k] for k in ("ai", "text", "factor_home", "factor_away",
                                             "absences_home", "absences_away", "sources")},
         })
