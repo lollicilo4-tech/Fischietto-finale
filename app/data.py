@@ -89,6 +89,18 @@ async def real_context() -> dict:
     async with httpx.AsyncClient() as client:
         fin = await _get(client, f"/competitions/{COMPETITION}/matches", {"status": "FINISHED"})
         sch = await _get(client, f"/competitions/{COMPETITION}/matches", {"status": "SCHEDULED,TIMED"})
+        previous = []
+        try:  # stagione scorsa: serve a non partire da zero nelle prime giornate
+            first = min(m["utcDate"] for m in sch["matches"]) if sch["matches"] else None
+            if first:
+                y = int(first[:4]) - (1 if int(first[5:7]) < 7 else 0)
+                prev = await _get(client, f"/competitions/{COMPETITION}/matches", {"season": y - 1, "status": "FINISHED"})
+                previous = [{"id": str(m["id"]), "date": m["utcDate"], "home": _name(m["homeTeam"]),
+                             "away": _name(m["awayTeam"]), "hg": m["score"]["fullTime"]["home"],
+                             "ag": m["score"]["fullTime"]["away"]}
+                            for m in prev["matches"] if m["score"]["fullTime"]["home"] is not None]
+        except (httpx.HTTPError, KeyError, ValueError):
+            previous = []
         try:  # la classifica è un di più: se manca, il resto funziona lo stesso
             st = await _get(client, f"/competitions/{COMPETITION}/standings", {})
         except httpx.HTTPError:
@@ -101,7 +113,7 @@ async def real_context() -> dict:
     ]
     if not finished:
         raise RuntimeError("Nessuna partita giocata: il modello ha bisogno di almeno qualche giornata.")
-    teams, avg_h, avg_a = model.build_teams(finished)
+    teams, avg_h, avg_a = model.build_teams(finished, previous)
 
     upcoming = sorted(sch["matches"], key=lambda m: m["utcDate"])
     if not upcoming:
@@ -112,7 +124,8 @@ async def real_context() -> dict:
          "kickoff": m["utcDate"], "label": None}
         for m in upcoming if m["matchday"] == matchday
     ]
-    return {"demo": False, "teams": teams, "avg_h": avg_h, "avg_a": avg_a,
+    simple = model.build_teams_simple(finished)
+    return {"demo": False, "teams_simple": simple, "teams": teams, "avg_h": avg_h, "avg_a": avg_a,
             "fixtures": fixtures, "finished": finished, "matchday": matchday,
             "standings": _standings(st)}
 

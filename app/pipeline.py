@@ -30,7 +30,11 @@ async def build_turno() -> dict:
         lh, la = model.expected_goals(teams, avg_h, avg_a, fx["home"], fx["away"])
         base = model.summarize(lh, la)
         base.update(lh=lh, la=la)
-        bases.append({"fx": fx, "base": base})
+        old = None
+        if ctx.get("teams_simple"):  # modello della prima versione, solo per il confronto
+            ts, sh, sa = ctx["teams_simple"]
+            old = model.summarize(*model.expected_goals_simple(ts, sh, sa, fx["home"], fx["away"]))
+        bases.append({"fx": fx, "base": base, "old": old})
 
     analyses = await analyst.analyze_all(bases, teams, use_ai=not ctx["demo"])
 
@@ -55,7 +59,9 @@ async def build_turno() -> dict:
         if not ctx["demo"]:
             store.save(fx["id"], fx["home"], fx["away"], fx["kickoff"], prob["p1"], prob["px"], prob["p2"],
                        extra={"o25": prob["o25"], "gg": prob["gg"], "xg": [round(lh, 2), round(la, 2)],
-                              "top": s["top_scores"][0][:2]})
+                              "top": s["top_scores"][0][:2], "ai": bool(an["ai"]),
+                              "base": {k: round(item["base"][k], 4) for k in ("p1", "px", "p2")},
+                              **({"old": {k: round(item["old"][k], 4) for k in ("p1", "px", "p2")}} if item["old"] else {})})
 
     return {"demo": ctx["demo"], "ai": any(a["ai"] for a in analyses),
             "ai_error": next((a.get("reason") for a in analyses if a.get("reason")), None),

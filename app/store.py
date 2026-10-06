@@ -122,5 +122,25 @@ def history(finished: list[dict]) -> dict:
     # Altri mercati, solo per i pronostici che li avevano salvati
     ou = [(p["o25"] >= 0.5) == (m["hg"] + m["ag"] >= 3) for _, p, m in rows if p.get("o25") is not None]
     gg = [(p["gg"] >= 0.5) == (m["hg"] > 0 and m["ag"] > 0) for _, p, m in rows if p.get("gg") is not None]
+    # Claude aiuta? Stessa partita, stesse metriche: probabilità finali contro sola statistica
+    both = [(p, _outcome(m)) for _, p, m in rows if p.get("ai") and p.get("base")]
+    if both:
+        def br(q, a):
+            return sum((q[k] - (1.0 if k == a else 0.0)) ** 2 for k in ("p1", "px", "p2"))
+        def top(q):
+            return max((("1", q["p1"]), ("X", q["px"]), ("2", q["p2"])), key=lambda x: x[1])[0]
+        out["claude"] = {"n": len(both),
+                         "brier_final": sum(br(p, a) for p, a in both) / len(both),
+                         "brier_stat": sum(br(p["base"], a) for p, a in both) / len(both),
+                         "hit_final": sum(1 for p, a in both if top(p) == a),
+                         "hit_stat": sum(1 for p, a in both if top(p["base"]) == a)}
+    # Modello nuovo (sola statistica) contro il vecchio, stesse partite
+    cmp = [(p, _outcome(m)) for _, p, m in rows if p.get("old") and p.get("base")]
+    if cmp:
+        def br2(q, a):
+            return sum((q[k] - (1.0 if k == a else 0.0)) ** 2 for k in ("p1", "px", "p2"))
+        out["versions"] = {"n": len(cmp),
+                           "brier_new": sum(br2(p["base"], a) for p, a in cmp) / len(cmp),
+                           "brier_old": sum(br2(p["old"], a) for p, a in cmp) / len(cmp)}
     out["markets"] = {"ou": {"n": len(ou), "hit": sum(ou)}, "gg": {"n": len(gg), "hit": sum(gg)}}
     return out
