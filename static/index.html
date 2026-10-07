@@ -57,6 +57,17 @@ h1, h2, h3, p { margin: 0; }
 .top .sub { color: var(--muted); }
 .tags { display: flex; gap: 6px; flex-wrap: wrap; }
 .tag { font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: 2px 10px; }
+.toprow { display: flex; align-items: center; gap: 12px; }
+.back { font: inherit; font-weight: 600; font-size: 14px; color: var(--link); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; cursor: pointer; white-space: nowrap; }
+.inner .top { gap: 6px; padding-bottom: 12px; }
+.inner .top h1 { font-size: 26px; }
+.inner .top .sub, .inner .tags .tag:nth-child(n+3) { display: none; }
+.inner .tags { flex-wrap: nowrap; }
+.inner .tag { white-space: nowrap; font-size: 11px; padding: 1px 8px; }
+.day { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); margin: 10px 0 -2px; }
+.day:first-child { margin-top: 0; }
+.peek { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.peek b { color: var(--fg); font-weight: 600; }
 .tag.warn { color: var(--gold); border-color: var(--gold); }
 .tag.ok { color: var(--good); border-color: var(--good); }
 
@@ -103,7 +114,7 @@ details.match summary::-webkit-details-marker { display: none; }
 .teams span { min-width: 0; overflow-wrap: anywhere; }
 .teams .away { text-align: right; }
 .bar { display: flex; height: 46px; gap: 3px; border-radius: 10px; overflow: hidden; }
-.bar i { font-style: normal; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; line-height: 1.05; min-width: 0; font-family: var(--font-num); }
+.bar i { font-style: normal; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; line-height: 1.05; min-width: 38px; font-family: var(--font-num); }
 .bar i small { font-family: var(--font-body); font-size: 10px; font-weight: 600; opacity: 0.8; letter-spacing: 0.06em; }
 .bar .h { background: var(--home); color: var(--on-home); }
 .bar .d { background: var(--draw); color: var(--on-draw); }
@@ -159,6 +170,14 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
 .hist small { display: block; color: var(--muted); font-size: 12px; }
 .ok { color: var(--good); font-weight: 700; text-align: center; }
 .ko { color: var(--bad); font-weight: 700; text-align: center; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.tile { font: inherit; text-align: left; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px 14px; min-height: 132px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; cursor: pointer; }
+.tile svg { width: 30px; height: 30px; stroke: var(--home); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.tile { min-width: 0; }
+.tile b { font-family: var(--font-display); font-weight: 700; font-size: 24px; overflow-wrap: anywhere; line-height: 1; text-transform: uppercase; display: block; }
+.tile small { display: block; margin-top: 4px; font-size: 12px; color: var(--muted); }
+.tile.main { grid-column: 1 / -1; min-height: 110px; background: linear-gradient(150deg, var(--surface2), var(--surface)); }
+.tile:active { transform: scale(0.98); }
 .sub2 { margin: 22px 0 10px; }
 .played { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .played .final { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 10px; align-items: center; }
@@ -201,22 +220,41 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
 </head>
 <body>
 <header class="top">
-  <h1>Fischietto <span>finale</span></h1>
+  <div class="toprow"><button type="button" class="back" id="back" hidden>‹ Home</button><h1>Fischietto <span>finale</span></h1></div>
   <p class="sub" id="sub">Serie A · come potrebbe andare ogni partita</p>
   <div class="tags" id="tags"></div>
   <div id="aierr"></div>
 </header>
 
 <main>
-  <section id="p-partite" role="tabpanel" aria-labelledby="t-partite">
+  <section id="p-home" role="tabpanel" aria-labelledby="t-home">
+    <p class="lead">Scegli cosa vedere.</p>
+    <div class="tiles">
+      <button type="button" class="tile main" data-go="partite">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 5v14M3 12h4M17 12h4"/></svg>
+        <span><b>Partite</b><small id="tile-partite">Il prossimo turno</small></span></button>
+      <button type="button" class="tile" data-go="sicure">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>
+        <span><b>Più sicure</b><small>Le selezioni più probabili</small></span></button>
+      <button type="button" class="tile" data-go="classifica">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        <span><b>Classifica</b><small>Serie A</small></span></button>
+      <button type="button" class="tile" data-go="storico" style="grid-column: 1 / -1; min-height: 100px">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span><b>Storico</b><small id="tile-storico">Pronostici e risultati veri</small></span></button>
+    </div>
+  </section>
+  <section id="p-partite" role="tabpanel" aria-labelledby="t-partite" hidden>
     <div id="hero"></div>
-    <p class="lead">Tocca una partita per aprire il dettaglio. La quota equa è 1 diviso la probabilità: non è una quota di bookmaker.</p>
+    <p class="lead">Tocca una partita per aprire il dettaglio. Le quote eque (1 diviso la probabilità) non sono quote di bookmaker.</p>
     <div class="list" id="matches"><div class="msg">Carico il turno…</div></div>
     <div id="played"></div>
   </section>
   <section id="p-sicure" role="tabpanel" aria-labelledby="t-sicure" hidden>
     <p class="lead">Per ogni partita il modello sceglie l'esito più probabile. Qui li metti insieme e vedi quanto scende la probabilità complessiva.</p>
     <div class="seg" id="seg" role="group" aria-label="Numero di selezioni"><span>Selezioni</span></div>
+    <div class="seg" id="seg2" role="group" aria-label="Tipo di selezioni"><span>Tipo</span></div>
+    <p class="lead" style="margin-top:-6px">Doppia chance (1X, X2), Over 1,5 e Under 3,5 sono quasi sempre le più probabili ma pagano pochissimo. "Selezioni nette" le esclude.</p>
     <div class="panel" id="combo"></div>
     <div class="panel">
       <h2>Come scende la probabilità</h2>
@@ -239,7 +277,9 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
 </main>
 
 <nav class="nav" role="tablist" aria-label="Sezioni">
-  <button role="tab" id="t-partite" aria-selected="true" aria-controls="p-partite">
+  <button role="tab" id="t-home" aria-selected="true" aria-controls="p-home">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>Home</button>
+  <button role="tab" id="t-partite" aria-selected="false" aria-controls="p-partite">
     <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M12 5v14M3 12h4M17 12h4"/></svg>Partite</button>
   <button role="tab" id="t-sicure" aria-selected="false" aria-controls="p-sicure">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>Più sicure</button>
@@ -257,11 +297,27 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
   var d2 = function (x) { return x == null ? "–" : x.toFixed(2).replace(".", ","); };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
   var DAYS = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
-  function when(m) {
-    if (m.label) return m.label;
+  var DAYN = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+  var MONTHS = ["gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"];
+  var SHORT = { Dom: "Domenica", Lun: "Lunedì", Mar: "Martedì", Mer: "Mercoledì", Gio: "Giovedì", Ven: "Venerdì", Sab: "Sabato" };
+  function when(m) {  // solo l'orario: il giorno sta nell'intestazione del gruppo
+    if (m.label) return m.label.split(" ").slice(1).join(" ");
     if (!m.kickoff) return "";
     var d = new Date(m.kickoff);
-    return DAYS[d.getDay()] + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  }
+  function dayOf(m) {
+    if (m.kickoff) { var d = new Date(m.kickoff); return DAYN[d.getDay()] + " " + d.getDate() + " " + MONTHS[d.getMonth()]; }
+    return m.label ? (SHORT[m.label.split(" ")[0]] || m.label.split(" ")[0]) : "Da programmare";
+  }
+  function grouped(list) {
+    var html = "", last = null, i = 0;
+    list.forEach(function (m) {
+      var g = dayOf(m);
+      if (g !== last) { html += '<h3 class="day">' + esc(g) + "</h3>"; last = g; }
+      html += card(m, i++);
+    });
+    return html;
   }
   function chips(f) { return f ? f.split("").map(function (c) { return '<span class="chip ' + c + '">' + c + "</span>"; }).join("") : '<span class="abs">nessun dato</span>'; }
 
@@ -270,7 +326,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     navigator.serviceWorker.register("sw.js").catch(function () {});
   }
 
-  var PICKS = [], n = 3;
+  var PICKS = [], MATCHES = [], n = 3, NODC = true;
 
   function best(m) {
     var p = m.prob;
@@ -280,7 +336,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       ["Over 1,5", "Almeno 2 gol", p.o15], ["Under 3,5", "Al massimo 3 gol", p.u35],
       ["Over 2,5", "Almeno 3 gol", p.o25], ["Under 2,5", "Al massimo 2 gol", p.u25],
       ["Gol", "Segnano entrambe", p.gg], ["No Gol", "Non segnano entrambe", p.ng]
-    ].sort(function (a, b) { return b[2] - a[2]; })[0];
+    ].filter(function (x) { return !(NODC && (x[0] === "1X" || x[0] === "X2" || x[0] === "Over 1,5" || x[0] === "Under 3,5")); }).sort(function (a, b) { return b[2] - a[2]; })[0];
     return { m: m.home + " – " + m.away, code: o[0], label: o[1], p: o[2] };
   }
 
@@ -300,6 +356,12 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     return out ? '<div class="res">' + out + "</div>" : "";
   }
 
+  function topPick(m) {
+    var p = m.prob;
+    if (p.px >= p.p1 && p.px >= p.p2) return "Pareggio";
+    return p.p1 >= p.p2 ? m.home : m.away;
+  }
+
   function card(m, i) {
     var p = m.prob, f = m.fair_odds, a = m.analysis, s = m.top_scores[0];
     var alt = m.top_scores.slice(1).map(function (x) { return x[0] + "-" + x[1]; }).join(", ");
@@ -315,7 +377,8 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       '<div class="bar" role="img" aria-label="' + esc(m.home) + " " + pc(p.p1) + ", pareggio " + pc(p.px) + ", " + esc(m.away) + " " + pc(p.p2) + '">' +
       '<i class="h" style="flex:' + p.p1 + '"><small>1</small>' + pc(p.p1) + "</i>" +
       '<i class="d" style="flex:' + p.px + '"><small>X</small>' + pc(p.px) + "</i>" +
-      '<i class="a" style="flex:' + p.p2 + '"><small>2</small>' + pc(p.p2) + "</i></div></summary>" +
+      '<i class="a" style="flex:' + p.p2 + '"><small>2</small>' + pc(p.p2) + "</i></div>" +
+      '<div class="peek"><span>Più probabile <b>' + esc(topPick(m)) + '</b></span><span>Risultato <b class="num">' + s[0] + "-" + s[1] + "</b></span></div></summary>" +
       '<div class="detail">' +
       "<div><div class=\"who\">" + (a.ai ? "Analisi con le ultime notizie" : "Analisi statistica") + '</div><p class="expl">' + esc(a.text) + "</p></div>" +
       abs + adj + src +
@@ -361,7 +424,7 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       '<div class="mid"><div class="label">X</div><div class="big">' + pc(p.px) + '</div></div>' +
       '<div class="side r"><div class="nm">' + esc(m.away) + '</div><div class="big">' + pc(p.p2) + '</div></div></div>' +
       '<div class="meta"><span>Risultato probabile <b class="num">' + s[0] + "-" + s[1] + '</b></span>' +
-      '<span>Esito più probabile <b>' + esc(top[1]) + '</b> · quota equa <b class="num">' + d2(top[3]) + '</b></span></div>' +
+      '<span>Esito più probabile <b>' + esc(top[1]) + '</b></span></div>' +
       '<button type="button" class="cta" data-open="m-' + esc(m.id) + '">Apri l\'analisi</button></div>';
     $("hero").querySelector(".cta").addEventListener("click", function () {
       var el = $(this.getAttribute("data-open"));
@@ -369,17 +432,23 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     });
   }
 
+  function computePicks() {
+    PICKS = MATCHES.map(best).sort(function (a, b) { return b.p - a.p; });
+    renderCombo();
+  }
+
   function renderCombo() {
     var sel = PICKS.slice(0, n), prod = sel.reduce(function (s, x) { return s * x.p; }, 1);
     $("combo").innerHTML = sel.map(function (x) {
-      return '<div class="pick"><div><div class="m">' + esc(x.m) + '</div><div class="t">' + esc(x.label) + ' <span style="color:var(--muted);font-weight:400">(' + esc(x.code) + ')</span></div></div><div class="p">' + pc(x.p) + "<small>quota equa " + d2(1 / x.p) + "</small></div></div>";
-    }).join("") + '<div class="combo"><div class="big">' + pc(prod) + '</div><div>probabilità che tutte le ' + n + " selezioni riescano, circa 1 volta su " + Math.round(1 / prod) + ".</div></div>";
+      return '<div class="pick"><div><div class="m">' + esc(x.m) + '</div><div class="t">' + esc(x.label) + ' <span style="color:var(--muted);font-weight:400">(' + esc(x.code) + ')</span></div></div><div class="p">' + pc(x.p) + "</div></div>";
+    }).join("") + '<div class="combo"><div class="big">' + pc(prod) + '</div><div>probabilità che tutte le ' + n + " selezioni riescano: circa " + Math.round(prod * 100) + " volte su 100.</div></div>";
     var cum = 1;
     $("decay").innerHTML = PICKS.slice(0, 5).map(function (x, i) {
       cum *= x.p;
       return '<div class="' + (i + 1 === n ? "on" : "") + '"><span>' + (i + 1) + (i ? " selezioni" : " selezione") + '</span><span class="track"><span class="fill" style="width:' + Math.round(cum * 100) + '%"></span></span><span class="val">' + pc(cum) + "</span></div>";
     }).join("");
     Array.prototype.forEach.call(document.querySelectorAll("#seg button"), function (b) { b.setAttribute("aria-pressed", String(+b.dataset.n === n)); });
+    Array.prototype.forEach.call(document.querySelectorAll("#seg2 button"), function (b) { b.setAttribute("aria-pressed", String((b.dataset.dc === "true") === NODC)); });
   }
   [2, 3, 4, 5].forEach(function (k) {
     var b = document.createElement("button");
@@ -387,13 +456,26 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
     b.addEventListener("click", function () { n = k; renderCombo(); });
     $("seg").appendChild(b);
   });
+  [[true, "Selezioni nette"], [false, "Tutte"]].forEach(function (o) {
+    var b = document.createElement("button");
+    b.type = "button"; b.textContent = o[1]; b.dataset.dc = String(o[0]);
+    b.addEventListener("click", function () { NODC = o[0]; computePicks(); });
+    $("seg2").appendChild(b);
+  });
 
-  var tabs = ["partite", "sicure", "classifica", "storico"];
+  var tabs = ["home", "partite", "sicure", "classifica", "storico"];
   tabs.forEach(function (t) {
     $("t-" + t).addEventListener("click", function () {
       tabs.forEach(function (u) { $("t-" + u).setAttribute("aria-selected", String(u === t)); $("p-" + u).hidden = u !== t; });
+      document.body.classList.toggle("inner", t !== "home");
+      $("back").hidden = t === "home";
       window.scrollTo(0, 0);
     });
+  });
+  $("back").addEventListener("click", function () { $("t-home").click(); });
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tile"), function (b) {
+    b.addEventListener("click", function () { $("t-" + b.getAttribute("data-go")).click(); });
   });
 
   fetch("/api/turno").then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Errore"); return j; }); })
@@ -408,19 +490,21 @@ h2 { font-family: var(--font-display); font-weight: 700; font-size: 22px; text-t
       $("tags").innerHTML = tags.join("");
       if (d.ai_error) $("aierr").innerHTML = '<div class="msg err"><b>Notizie non caricate.</b>' + esc(d.ai_error) + "</div>";
       if (d.matchday) $("sub").textContent = "Serie A · giornata " + d.matchday;
+      $("tile-partite").textContent = (d.matchday ? "Giornata " + d.matchday + " · " : "") + d.matches.length + " partite";
       hero(d.matches);
-      $("matches").innerHTML = d.matches.map(card).join("");
+      MATCHES = d.matches;
+      $("matches").innerHTML = grouped(d.matches);
       if (d.played && d.played.length) {
         var hits = d.played.filter(function (x) { return x.ok; }).length;
         $("played").innerHTML = '<h2 class="sub2">Già giocate</h2><p class="lead">Ultime ' + d.played.length + " partite pronosticate: esito azzeccato " + hits + " volte su " + d.played.length + '.</p><div class="list">' + d.played.map(played).join("") + "</div>";
       }
-      PICKS = d.matches.map(best).sort(function (a, b) { return b.p - a.p; });
-      renderCombo();
+      computePicks();
     })
     .catch(function (e) { $("matches").innerHTML = '<div class="msg err">' + esc(e.message) + "</div>"; });
 
   fetch("/api/storico").then(function (r) { return r.json(); }).then(function (h) {
     if (h.demo) $("hist-lead").textContent = "Esempio dimostrativo. Con i dati reali qui compaiono i pronostici salvati prima di ogni partita e confrontati con il risultato.";
+    if (h.n) $("tile-storico").textContent = "Esito azzeccato " + h.hit + " su " + h.n;
     if (!h.n) { $("sum").innerHTML = '<div class="stat wide"><div class="k">Ancora vuoto</div><div class="s">Appena si giocano le partite pronosticate, compare il confronto.</div></div>'; return; }
     $("sum").innerHTML =
       '<div class="stat"><div class="k">Esito 1X2 azzeccato</div><div class="v">' + h.hit + " su " + h.n + '</div><div class="s">' + pc(h.hit / h.n) + "</div></div>" +
